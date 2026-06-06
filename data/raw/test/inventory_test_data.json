@@ -1,0 +1,45 @@
+{
+    "player": "TestPlayer",
+    "inventory": [
+        {
+            "item_id": 1001,
+            "item_name": "Rubedite Ore",
+            "quantity": 250
+        },
+        {
+            "item_id": 1002,
+            "item_name": "Ancestor Silk",
+            "quantity": 180
+        },
+        {
+            "item_id": 1003,
+            "item_name": "Dreugh Wax",
+            "quantity": 12
+        },
+        {
+            "item_id": 1004,
+            "item_name": "Kuta",
+            "quantity": 25
+        },
+        {
+            "item_id": 1005,
+            "item_name": "Perfect Roe",
+            "quantity": 8
+        },
+        {
+            "item_id": 1006,
+            "item_name": "Columbine",
+            "quantity": 75
+        },
+        {
+            "item_id": 1007,
+            "item_name": "Corn Flower",
+            "quantity": 60
+        },
+        {
+            "item_id": 1008,
+            "item_name": "Tempering Alloy",
+            "quantity": 5
+        }
+    ]
+}

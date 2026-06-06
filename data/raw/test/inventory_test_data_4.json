@@ -1,0 +1,30 @@
+{
+    "player": "TreasureHunter",
+    "inventory": [
+        {
+            "item_id": 4001,
+            "item_name": "Tempering Alloy",
+            "quantity": 12
+        },
+        {
+            "item_id": 4002,
+            "item_name": "Chromium Plating",
+            "quantity": 4
+        },
+        {
+            "item_id": 4003,
+            "item_name": "Aetherial Dust",
+            "quantity": 1
+        },
+        {
+            "item_id": 4004,
+            "item_name": "Perfect Roe",
+            "quantity": 5
+        },
+        {
+            "item_id": 4005,
+            "item_name": "Kuta",
+            "quantity": 18
+        }
+    ]
+}

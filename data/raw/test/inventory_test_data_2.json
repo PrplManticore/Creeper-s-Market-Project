@@ -1,0 +1,30 @@
+{
+    "player": "CrafterOne",
+    "inventory": [
+        {
+            "item_id": 2001,
+            "item_name": "Ruby Ash Wood",
+            "quantity": 320
+        },
+        {
+            "item_id": 2002,
+            "item_name": "Rosin",
+            "quantity": 15
+        },
+        {
+            "item_id": 2003,
+            "item_name": "Ancestor Silk",
+            "quantity": 90
+        },
+        {
+            "item_id": 2004,
+            "item_name": "Perfect Roe",
+            "quantity": 3
+        },
+        {
+            "item_id": 2005,
+            "item_name": "Kuta",
+            "quantity": 10
+        }
+    ]
+}

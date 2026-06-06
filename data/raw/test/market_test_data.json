@@ -1,0 +1,68 @@
+{
+    "market_data": [
+        {
+            "item_id": 1001,
+            "item_name": "Rubedite Ore",
+            "average_price": 45,
+            "highest_price": 60,
+            "best_trader": "Mournhold Guild Trader",
+            "location": "Deshaan"
+        },
+        {
+            "item_id": 1002,
+            "item_name": "Ancestor Silk",
+            "average_price": 55,
+            "highest_price": 72,
+            "best_trader": "Elden Root Guild Trader",
+            "location": "Grahtwood"
+        },
+        {
+            "item_id": 1003,
+            "item_name": "Dreugh Wax",
+            "average_price": 4800,
+            "highest_price": 5500,
+            "best_trader": "Wayrest Guild Trader",
+            "location": "Stormhaven"
+        },
+        {
+            "item_id": 1004,
+            "item_name": "Kuta",
+            "average_price": 3200,
+            "highest_price": 3700,
+            "best_trader": "Mournhold Guild Trader",
+            "location": "Deshaan"
+        },
+        {
+            "item_id": 1005,
+            "item_name": "Perfect Roe",
+            "average_price": 85000,
+            "highest_price": 92000,
+            "best_trader": "Vivec City Guild Trader",
+            "location": "Vvardenfell"
+        },
+        {
+            "item_id": 1006,
+            "item_name": "Columbine",
+            "average_price": 900,
+            "highest_price": 1100,
+            "best_trader": "Rawl'kha Guild Trader",
+            "location": "Reaper's March"
+        },
+        {
+            "item_id": 1007,
+            "item_name": "Corn Flower",
+            "average_price": 650,
+            "highest_price": 800,
+            "best_trader": "Wayrest Guild Trader",
+            "location": "Stormhaven"
+        },
+        {
+            "item_id": 1008,
+            "item_name": "Tempering Alloy",
+            "average_price": 7200,
+            "highest_price": 8100,
+            "best_trader": "Vivec City Guild Trader",
+            "location": "Vvardenfell"
+        }
+    ]
+}

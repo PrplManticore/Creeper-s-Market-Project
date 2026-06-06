@@ -1,0 +1,30 @@
+{
+    "player": "PvPFarmer",
+    "inventory": [
+        {
+            "item_id": 3001,
+            "item_name": "Columbine",
+            "quantity": 150
+        },
+        {
+            "item_id": 3002,
+            "item_name": "Bugloss",
+            "quantity": 130
+        },
+        {
+            "item_id": 3003,
+            "item_name": "Corn Flower",
+            "quantity": 140
+        },
+        {
+            "item_id": 3004,
+            "item_name": "Dragonthorn",
+            "quantity": 100
+        },
+        {
+            "item_id": 3005,
+            "item_name": "Dreugh Wax",
+            "quantity": 8
+        }
+    ]
+}
