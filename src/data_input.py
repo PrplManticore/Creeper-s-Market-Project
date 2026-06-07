@@ -5,11 +5,69 @@ import csv
 inventory_data = []
 market_data = []
 
-def load_inventory_data(file_path):
+def choose_inventory_file(directory=None):
+    # Prompt the user to select an inventory file from a directory
+    if directory is None:
+        directory = Path(__file__).resolve().parent.parent / "data" / "raw" / "test"
+    else:
+        directory = Path(directory)
+
+    if directory.is_file():
+        return directory
+    
+    if not directory.exists():
+        raise FileNotFoundError(f"Directory not found: {directory}")
+    
+    inventory_files = sorted(
+        [path for path in directory.glob("inventory*.*")
+         if path.suffix.lower() in [".json", ".csv"]]
+    )
+
+    if not inventory_files:
+        raise FileNotFoundError(f"No inventory files found in directory: {directory}")
+
+    print("Available inventory files:")
+    for index, path in enumerate(inventory_files, start=1):
+        print(f"  {index}. {path.name}")
+
+    while True:
+        selection = input("select an inventory file by number or enter a file path: ").strip()
+        if selection.isdigit():
+            selected_index = int(selection) - 1
+            if 0 <= selected_index < len(inventory_files):
+                return inventory_files[selected_index]
+        else:
+            candidate = Path(selection)
+            if not candidate.is_absolute():
+                candidate = directory / candidate
+            if candidate.exists() and candidate.is_file():
+                return candidate
+            
+        print("Invalid selection. Please enter a valid number or file path.")
+
+def load_inventory_data(file_path=None):
     global inventory_data
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-        inventory_data = data["inventory"]
+    if file_path is None:
+        file_path = choose_inventory_file()
+    else:
+        file_path = Path(file_path)
+        if file_path.is_dir():
+            file_path = choose_inventory_file(file_path)
+
+    if not validate_file_format(file_path):
+        raise ValueError(f"Invalid file format: {file_path}")
+    
+    if file_path.suffix.lower() == ".json":
+        with open(file_path, "r") as file:
+            data = json.load(file)
+            inventory_data = data["inventory"]
+    elif file_path.suffix.lower() == ".csv":
+        with open(file_path, "r", newline="") as file:
+            reader = csv.DictReader(file)
+            inventory_data = list(reader)
+
+    else:
+        raise ValueError(f"Unsupported inventory file type: {file_path.suffix}")
 
 def load_market_data(file_path):
     global market_data
@@ -113,17 +171,31 @@ if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent
     DATA_DIR = BASE_DIR.parent / "data" / "raw" / "test"
 
-    load_inventory_data(DATA_DIR / "inventory_test_data.json")
-    validate_file_format(DATA_DIR / "inventory_test_data.json")
-    load_market_data(DATA_DIR / "market_test_data.json")
-    validate_file_format(DATA_DIR / "market_test_data.json")
-    print("Inventory Data:\n") 
+    # Let the user select which inventory file to load
+    try:
+        inventory_file = choose_inventory_file(DATA_DIR)
+        print(f"\nSelected inventory file: {inventory_file}")
+        load_inventory_data(inventory_file)
+        if validate_file_format(inventory_file):
+            print(f"Inventory file format is valid: {inventory_file}")
+    except Exception as e:
+        print(f"ERROR! Failed loading inventory data: {e}")
+        raise
+
+    # Load the default market data file
+    market_file = DATA_DIR / "market_test_data.json"
+    try:
+        load_market_data(market_file)
+        if validate_file_format(market_file):
+            print(f"Market file format is valid: {market_file}\n")
+    except Exception as e:
+        print(f"ERROR! Failed loading market data: {e}")
+        raise
+
+    print("Inventory Data:\n")
     for item in get_inventory_data():
         print(item)
-    if validate_file_format(DATA_DIR / "inventory_test_data.json"):
-        print(f"\nFile format for {DATA_DIR / 'inventory_test_data.json'} is valid.\n")
-    print("Market Data:\n")
+
+    print("\nMarket Data:\n")
     for item in get_market_data():
         print(item)
-    if validate_file_format(DATA_DIR / "market_test_data.json"):
-        print(f"\nFile format for {DATA_DIR / 'market_test_data.json'} is valid.\n")
