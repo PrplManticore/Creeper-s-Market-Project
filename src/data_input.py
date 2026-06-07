@@ -166,36 +166,3 @@ def find_item_in_market(item_id):
         if item['item_id'] == item_id:
             return item
     return None
-
-if __name__ == "__main__":
-    BASE_DIR = Path(__file__).resolve().parent
-    DATA_DIR = BASE_DIR.parent / "data" / "raw" / "test"
-
-    # Let the user select which inventory file to load
-    try:
-        inventory_file = choose_inventory_file(DATA_DIR)
-        print(f"\nSelected inventory file: {inventory_file}")
-        load_inventory_data(inventory_file)
-        if validate_file_format(inventory_file):
-            print(f"Inventory file format is valid: {inventory_file}")
-    except Exception as e:
-        print(f"ERROR! Failed loading inventory data: {e}")
-        raise
-
-    # Load the default market data file
-    market_file = DATA_DIR / "market_test_data.json"
-    try:
-        load_market_data(market_file)
-        if validate_file_format(market_file):
-            print(f"Market file format is valid: {market_file}\n")
-    except Exception as e:
-        print(f"ERROR! Failed loading market data: {e}")
-        raise
-
-    print("Inventory Data:\n")
-    for item in get_inventory_data():
-        print(item)
-
-    print("\nMarket Data:\n")
-    for item in get_market_data():
-        print(item)
