@@ -6,10 +6,8 @@ from data_input import (
     get_market_data,
     validate_file_format,
 )
-from typing import Any, Dict, List
+from UI import MarketApp
 from pathlib import Path
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR.parent / "data" / "raw" / "test"
@@ -40,7 +38,5 @@ inventory = get_inventory_data()
 market = get_market_data()
 print(f"Loaded {len(inventory)} inventory items and {len(market)} market items")
 
-try:
-    start_ui()
-except Exception as e:
-    print(f"UI exited with error: {e}")
+if __name__ == "__main__":
+    MarketApp().run()
