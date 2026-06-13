@@ -45,6 +45,7 @@ def choose_inventory_file(directory=None):
             
         print("Invalid selection. Please enter a valid number or file path.")
 
+
 def load_inventory_data(file_path=None):
     global inventory_data
     if file_path is None:
@@ -69,24 +70,29 @@ def load_inventory_data(file_path=None):
     else:
         raise ValueError(f"Unsupported inventory file type: {file_path.suffix}")
 
+
 def load_market_data(file_path):
     global market_data
     with open(file_path, 'r') as file:
         data = json.load(file)
         market_data = data["market_data"]
 
+
 def get_inventory_data():
     return inventory_data
 
+
 def get_market_data():
     return market_data
+
 
 def safe_int(value, default=0):
     try:
         return int(float(value))
     except (TypeError, ValueError):
         return default
-    
+
+
 def standardize_string(value):
     # Checks that string is not empty and capitalizes the first letter of each word
     value = str(value).strip()
@@ -104,6 +110,7 @@ def standardize_string(value):
 
     return " ".join(parts)
 
+
 def standardize_inventory_data(raw_inventory):
     standardized = []
     for item in raw_inventory:
@@ -113,6 +120,7 @@ def standardize_inventory_data(raw_inventory):
             "quantity": safe_int(item.get("quantity", 0)),
         })
     return standardized
+
 
 def standardize_market_data(raw_market):
     standardized = []
@@ -125,6 +133,7 @@ def standardize_market_data(raw_market):
             "location": standardize_string(item.get("location", ""))
         })
     return standardized
+
 
 def validate_file_format(file_path):
     # Validate that the file exists and is in the correct format (JSON or CSV)
@@ -153,12 +162,14 @@ def validate_file_format(file_path):
     
     return True
 
+
 def find_item_in_inventory(item_id):
     # Find an item in the inventory data by its item_id
     for item in inventory_data:
         if item['item_id'] == item_id:
             return item
     return None
+
 
 def find_item_in_market(item_id):
     # Find an item in the market data by its item_id

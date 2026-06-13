@@ -15,6 +15,7 @@ from data_input import (
     find_item_in_inventory,
     find_item_in_market,
 )
+import data_clean as dc
 
 class MarketApp(tk.Tk):
     def __init__(self) -> None:
@@ -35,6 +36,7 @@ class MarketApp(tk.Tk):
             except Exception:
                 pass
         self.refresh_all()
+
 
     def create_widgets(self) -> None:
         header = ttk.Label(self, text="Creeper's Market", font=("Segoe UI", 18, "bold"))
@@ -86,6 +88,7 @@ class MarketApp(tk.Tk):
         self.status = tk.StringVar(value="Ready")
         ttk.Label(self, textvariable=self.status, anchor="w").pack(fill="x", padx=8, pady=(0, 8))
 
+
     def format_item(self, item: Dict[str, Any]) -> str:
         if not isinstance(item, dict):
             return str(item)
@@ -93,15 +96,28 @@ class MarketApp(tk.Tk):
         parts = [f"{k}: {item.get(k)}" for k in keys if k in item]
         return " | ".join(parts) if parts else str(item)
     
+
     def open_inventory_file(self) -> None:
         path = filedialog.askopenfilename(
             title="Select Inventory File",
             initialdir=self.DATA_DIR,
-            filetypes=[("JSON/CSV", "*.json *.csv"), ("All files", "*.*")]
+            filetypes=[("JSON/CSV", "*.json *.csv *.lua"), ("All files", "*.*")]
         )
         if not path:
             return
+        
         try:
+            input_path = Path(path)
+            if input_path.suffix.lower() == ".lua":
+                cleaned_path = dc.convert_file(
+                    path,
+                    output_path=self.DATA_DIR / f"{input_path.stem}_cleaned.json",
+                    output_format="json",
+                    root_key="inventory_data"
+                )
+            else:
+                cleaned_path = input_path
+
             load_inventory_data(path)
             self.inventory_file = Path(path)
             self.status.set(f"Loaded inventory: {Path(path).name}")
@@ -111,6 +127,7 @@ class MarketApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load inventory:\n{e}")
             self.status.set("Failed to load inventory")
+
 
     def auto_select_inventory(self) -> None:
         inventory_files = sorted(
@@ -147,15 +164,28 @@ class MarketApp(tk.Tk):
             messagebox.showerror("Auto-select Error", str(e))
             self.status.set("Auto-select failed")
 
+
     def open_market_file(self) -> None:
         path = filedialog.askopenfilename(
             title="Select Market File",
             initialdir=self.DATA_DIR,
-            filetypes=[("JSON", "*.json"), ("All files", "*.*")]
+            filetypes=[("JSON/CSV", "*.json *.csv *.lua"), ("All files", "*.*")]
         )
         if not path:
             return
+        
         try:
+            input_path = Path(path)
+            if input_path.suffix.lower() == ".lua":
+                cleaned_path = dc.convert_file(
+                    path,
+                    output_path=self.DATA_DIR / f"{input_path.stem}_cleaned.json",
+                    output_format="json",
+                    root_key="market_data"
+                )
+            else:
+                cleaned_path = input_path
+
             load_market_data(path)
             self.market_file = Path(path)
             self.status.set(f"Loaded market: {Path(path).name}")
@@ -165,6 +195,7 @@ class MarketApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load market:\n{e}")
             self.status.set("Failed to load market")
+
 
     def apply_inventory_standardization(self) -> None:
         try:
@@ -176,6 +207,7 @@ class MarketApp(tk.Tk):
         except Exception as e:
             messagebox.showwarning("Standardize Error", f"Failed to standardize inventory: {e}")
 
+
     def apply_market_standardization(self) -> None:
         try:
             mkt = get_market_data() or []
@@ -185,6 +217,7 @@ class MarketApp(tk.Tk):
             self.refresh_market_list()
         except Exception as e:
             messagebox.showwarning("Standardize Error", f"Failed to standardize market: {e}")
+
 
     def on_standardize_toggled(self) -> None:
         # Apply or remove standardization based on flags
@@ -211,6 +244,7 @@ class MarketApp(tk.Tk):
                 except Exception:
                     pass
 
+
     def refresh_inventory_list(self) -> None:
         items = get_inventory_data() or []
         self.inv_list.delete(0, tk.END)
@@ -218,11 +252,13 @@ class MarketApp(tk.Tk):
             self.inv_list.insert(tk.END, self.format_item(it))
         self.status.set(f"Inventory: {len(items)} items")
 
+
     def refresh_market_list(self) -> None:
         items = get_market_data() or []
         self.mkt_list.delete(0, tk.END)
         for it in items[:500]:
             self.mkt_list.insert(tk.END, self.format_item(it))
+
 
     def refresh_all(self) -> None:
         if self.market_file and self.market_file.exists():
@@ -232,6 +268,7 @@ class MarketApp(tk.Tk):
                 pass
         self.refresh_inventory_list()
         self.refresh_market_list()
+
 
     def search_item(self) -> None:
         raw = self.search_entry.get().strip()
@@ -257,6 +294,7 @@ class MarketApp(tk.Tk):
             parts.append("Market: (no match)")
 
         messagebox.showinfo("Search Results", "\n\n".join(parts))
+
 
 def run_app() -> None:
     app = MarketApp()
