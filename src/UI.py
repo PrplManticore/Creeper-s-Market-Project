@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+import threading
 
 import data_input as di
 from data_input import (
@@ -31,10 +32,7 @@ class MarketApp(tk.Tk):
         self.create_widgets()
         # Try to load default market file if present
         if self.market_file and self.market_file.exists():
-            try:
-                load_market_data(self.market_file)
-            except Exception:
-                pass
+            self._load_market_in_thread(self.market_file, suppress_error=True)
         self.refresh_all()
 
 
@@ -90,6 +88,7 @@ class MarketApp(tk.Tk):
 
 
     def format_item(self, item: Dict[str, Any]) -> str:
+        # Format a record into a readable string for listbox display.
         if not isinstance(item, dict):
             return str(item)
         keys = ("item_id", "item_name", "quantity", "selling_price", "location")
@@ -97,7 +96,79 @@ class MarketApp(tk.Tk):
         return " | ".join(parts) if parts else str(item)
     
 
+    def _load_inventory_in_thread(self, path: Path) -> None:
+        # Load inventory file in a background threadto keep UI responsive.
+        def load():
+            try:
+                p = Path(path)
+                if p.suffix.lower() == ".lua":
+                    try:
+                        cleaned = dc.convert_file(
+                            str(p),
+                            output_path=self.DATA_DIR / f"{p.stem}_cleaned.json",
+                            output_format="json",
+                            root_key="inventory_data",
+                        )
+                        load_path = Path(cleaned)
+                    except Exception as e:
+                        self.after(0, lambda: messagebox.showerror("Conversion Error", f"Failed to convert Lua inventory file:\n{e}"))
+                        self.after(0, lambda: self.status.set("Failed to convert inventory"))
+                        return
+                else:
+                    load_path = p
+
+                load_inventory_data(load_path)
+                self.inventory_file = load_path
+                if self.standardize_inventory_flag.get():
+                    self.apply_inventory_standardization()
+                self.after(0, self.refresh_inventory_list)
+                self.after(0, lambda: self.status.set(f"Loaded inventory: {load_path.name}"))
+            except Exception as e:
+                self.after(0, lambda: messagebox.showerror("Load Error", f"Failed to load inventory:\n{e}"))
+                self.after(0, lambda: self.status.set("Failed to load inventory"))
+                
+        thread = threading.Thread(target=load, daemon=True)
+        thread.start()
+
+
+    def _load_market_in_thread(self, path: Path, suppress_error: bool = False) -> None:
+        # Load market file in a background thread to keep UI responsive.
+        def load():
+            try:
+                p = Path(path)
+                # If Lua, convert to JSON first (in background)
+                if p.suffix.lower() == ".lua":
+                    try:
+                        cleaned = dc.convert_file(
+                            str(p),
+                            output_path=self.DATA_DIR / f"{p.stem}_cleaned.json",
+                            output_format="json",
+                            root_key="market_data",
+                        )
+                        load_path = Path(cleaned)
+                    except Exception as e:
+                        if not suppress_error:
+                            self.after(0, lambda: messagebox.showerror("Conversion Error", f"Failed to convert Lua market file:\n{e}"))
+                            self.after(0, lambda: self.status.set("Failed to convert market"))
+                        return
+                else:
+                    load_path = p
+
+                load_market_data(load_path)
+                self.market_file = load_path
+                if self.standardize_market_flag.get():
+                    self.apply_market_standardization()
+                self.after(0, self.refresh_market_list)
+                self.after(0, lambda: self.status.set(f"Loaded market: {load_path.name}"))
+            except Exception as e:
+                self.after(0, lambda: messagebox.showerror("Load Error", f"Failed to load market:\n{e}"))
+                self.after(0, lambda: self.status.set("Failed to load market"))
+
+            thread = threading.Thread(target=load, daemon=True)
+            thread.start()
+
     def open_inventory_file(self) -> None:
+        # Prompt the user to choose an inventory file and start loading it.
         path = filedialog.askopenfilename(
             title="Select Inventory File",
             initialdir=self.DATA_DIR,
@@ -118,18 +189,15 @@ class MarketApp(tk.Tk):
             else:
                 cleaned_path = input_path
 
-            load_inventory_data(path)
-            self.inventory_file = Path(path)
-            self.status.set(f"Loaded inventory: {Path(path).name}")
-            if self.standardize_inventory_flag.get():
-                self.apply_inventory_standardization()
-            self.refresh_inventory_list()
+            self.status.set("Loading inventory...")
+            self._load_inventory_in_thread(input_path)
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load inventory:\n{e}")
             self.status.set("Failed to load inventory")
 
 
     def auto_select_inventory(self) -> None:
+        # Let the user pick an inventory file from the default data directory.
         inventory_files = sorted(
             [p for p in self.DATA_DIR.glob("inventory*.*") if p.suffix.lower() in [".json", ".csv"]]
         )
@@ -153,19 +221,12 @@ class MarketApp(tk.Tk):
             return
         
         selected_path = inventory_files[selection - 1]
-        try:
-            load_inventory_data(selected_path)
-            self.inventory_file = selected_path
-            self.status.set(f"Auto-selected inventory: {selected_path.name}")
-            if self.standardize_inventory_flag.get():
-                self.apply_inventory_standardization()
-            self.refresh_inventory_list()
-        except Exception as e:
-            messagebox.showerror("Auto-select Error", str(e))
-            self.status.set("Auto-select failed")
+        self.status.set("Loading inventory...")
+        self._load_inventory_in_thread(selected_path)
 
 
     def open_market_file(self) -> None:
+        # Prompt the user to choose a market file and load it asynchronously.
         path = filedialog.askopenfilename(
             title="Select Market File",
             initialdir=self.DATA_DIR,
@@ -176,28 +237,16 @@ class MarketApp(tk.Tk):
         
         try:
             input_path = Path(path)
-            if input_path.suffix.lower() == ".lua":
-                cleaned_path = dc.convert_file(
-                    path,
-                    output_path=self.DATA_DIR / f"{input_path.stem}_cleaned.json",
-                    output_format="json",
-                    root_key="market_data"
-                )
-            else:
-                cleaned_path = input_path
-
-            load_market_data(path)
-            self.market_file = Path(path)
-            self.status.set(f"Loaded market: {Path(path).name}")
-            if self.standardize_market_flag.get():
-                self.apply_market_standardization()
-            self.refresh_market_list()
+            # Do Lua conversion inside background thread to avoid blocking UI
+            self.status.set("Loading market...")
+            self._load_market_in_thread(input_path)
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load market:\n{e}")
             self.status.set("Failed to load market")
 
 
     def apply_inventory_standardization(self) -> None:
+        # Standardize the loaded inventory records and refresh the display.
         try:
             inv = get_inventory_data() or []
             standardized = standardize_inventory_data(inv)
@@ -209,6 +258,7 @@ class MarketApp(tk.Tk):
 
 
     def apply_market_standardization(self) -> None:
+        # Standardize the loaded market records and refresh the display.
         try:
             mkt = get_market_data() or []
             standardized = standardize_market_data(mkt)
@@ -225,27 +275,32 @@ class MarketApp(tk.Tk):
             self.apply_inventory_standardization()
         else:
             # Reload original file if available to undo standardization
-            if self.inventory_file:
+            def reload():
                 try:
                     load_inventory_data(self.inventory_file)
-                    self.status.set("Inventory reloaded (standardize off)")
-                    self.refresh_inventory_list()
+                    self.after(0, self.refresh_inventory_list)
+                    self.after(0, lambda: self.status.set("Inventory reloaded (standaridize off)"))
                 except Exception:
                     pass
+            thread = threading.Thread(target=reload, daemon=True)
+            thread.start()
 
         if self.standardize_market_flag.get():
             self.apply_market_standardization()
         else:
             if self.market_file and self.market_file.exists():
-                try:
-                    load_market_data(self.market_file)
-                    self.status.set("Market reloaded (standardize off)")
-                    self.refresh_market_list()
-                except Exception:
-                    pass
-
+                def reload():
+                    try:
+                        load_market_data(self.market_file)
+                        self.after(0, self.refresh_market_list)
+                        self.after(0, lambda: self.status.set("Market reloaded (standardize off)"))
+                    except Exception:
+                        pass
+                thread = threading.Thread(target=reload, daemon=True)
+                thread.start()
 
     def refresh_inventory_list(self) -> None:
+        # Refresh the inventory listbox with the currently loaded inventory records.
         items = get_inventory_data() or []
         self.inv_list.delete(0, tk.END)
         for it in items[:500]:
@@ -254,6 +309,7 @@ class MarketApp(tk.Tk):
 
 
     def refresh_market_list(self) -> None:
+        # Refresh the market listbox with the currently loaded market records.
         items = get_market_data() or []
         self.mkt_list.delete(0, tk.END)
         for it in items[:500]:
@@ -261,16 +317,22 @@ class MarketApp(tk.Tk):
 
 
     def refresh_all(self) -> None:
+        # Reload market data from disk if available, then refresh both lists.
         if self.market_file and self.market_file.exists():
-            try:
-                load_market_data(self.market_file)
-            except Exception:
-                pass
+            def load():
+                try:
+                    load_market_data(self.market_file)
+                    self.after(0, self.refresh_market_list)
+                except Exception:
+                    pass
+                thread = threading.Thread(target=load, daemon=True)
+                thread.start()
         self.refresh_inventory_list()
         self.refresh_market_list()
 
 
     def search_item(self) -> None:
+        # Search inventory and market data for a given item_id and show results.
         raw = self.search_entry.get().strip()
         if not raw:
             messagebox.showinfo("Search", "Enter item_id")

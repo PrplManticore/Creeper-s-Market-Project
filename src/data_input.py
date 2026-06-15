@@ -47,6 +47,7 @@ def choose_inventory_file(directory=None):
 
 
 def load_inventory_data(file_path=None):
+    # Load inventory records from a JSON or CSV file into the global inventory_data list.
     global inventory_data
     if file_path is None:
         file_path = choose_inventory_file()
@@ -72,6 +73,7 @@ def load_inventory_data(file_path=None):
 
 
 def load_market_data(file_path):
+    # Load market data from a JSON file into the global market_data list.
     global market_data
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -79,14 +81,17 @@ def load_market_data(file_path):
 
 
 def get_inventory_data():
+    # Return the currently loaded inventory dataset.
     return inventory_data
 
 
 def get_market_data():
+    # Return the currently loaded market dataset.
     return market_data
 
 
 def safe_int(value, default=0):
+    # Safely convert input values to integers, falling back to default on errors.
     try:
         return int(float(value))
     except (TypeError, ValueError):
@@ -94,7 +99,7 @@ def safe_int(value, default=0):
 
 
 def standardize_string(value):
-    # Checks that string is not empty and capitalizes the first letter of each word
+    # Normalize text: strip whitespace and capitalize names cleanly
     value = str(value).strip()
     if not value:
         return ""
@@ -112,6 +117,7 @@ def standardize_string(value):
 
 
 def standardize_inventory_data(raw_inventory):
+    # Normalize raw inventory records into a consistent schema.
     standardized = []
     for item in raw_inventory:
         standardized.append({
@@ -123,6 +129,7 @@ def standardize_inventory_data(raw_inventory):
 
 
 def standardize_market_data(raw_market):
+    # Normalize raw market records into a consistent schema.
     standardized = []
     for item in raw_market:
         standardized.append({

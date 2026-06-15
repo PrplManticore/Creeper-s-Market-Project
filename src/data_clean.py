@@ -2,6 +2,18 @@ from pathlib import Path
 import re
 import json
 import csv
+from typing import Optional, Union
+import shutil
+
+def convert_to_json_and_save(input_path: Union[str, Path],
+                             output_dir: Optional[Union[str, Path]] = None,
+                             root_key: Optional[str] = None) -> Path:
+    """
+    Placeholder function.
+    Intended to convert data to JSON and save it to output_dir,
+    optionally wrapping the result under root_key.
+    """
+    pass
 
 def lua_table_to_json(text:str):
     # Trim everything outside the outermost braces
@@ -42,7 +54,7 @@ def lua_table_to_json(text:str):
                 continue
 
             if ch == '{':
-                # Find the slice for this breace to inspect content (non-recursive lookahead)
+                # Attempt to decide whether this table should be an array or object
                 j = i + 1
                 depth = 1
                 while j < len(s) and depth > 0:
@@ -63,7 +75,7 @@ def lua_table_to_json(text:str):
                     depth += 1
                 j += 1
             inner = s[i+1:j-1] if j-1 > i else ""
-            # Decide: treat as object if inner contains a quoted-key followed by ':' before any top-level comma
+            # Decide if inner content looks like an object (key:value) or array
             if re.search(r'"\s*[\w\- ]+\s*"\s*:', inner) or re.search(r'\w+\s*:', inner):
                 out.append('{')
                 stack.append('object')
@@ -101,8 +113,10 @@ def load_data(file_path):
     suffix = file_path.suffix.lower()
 
     if suffix == ".json":
-        with file_path.open("r", encoding="utg-8") as f:
+        # Load JSON content from file
+        with file_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
+
         if isinstance(data, dict):
             # if JSON wraps the list in a root key, pick the first list
             lists = [value for value in data.values() if isinstance(value, list)]
@@ -117,11 +131,13 @@ def load_data(file_path):
         raise ValueError(f"Unsupported JSON structure in {file_path}")
     
     if suffix == ".csv":
+        # Load CSV rows as a list of dicts
         with file_path.open("r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             return list(reader)
         
     if suffix == ".lua":
+        # Convert Lua table syntax to JSON-like Python data
         text = file_path.read_text(encoding="utf-8")
         return lua_table_to_json(text)
         
@@ -159,6 +175,7 @@ def convert_file(input_path, output_path=None, output_format=None, root_key=None
     data = load_data(input_path)
 
     if output_format is None:
+        # Default format flips JSON->CSV or any other input->JSON
         output_format = "csv" if input_path.suffix.lower() == ".json" else "json"
     
     if output_path is None:
