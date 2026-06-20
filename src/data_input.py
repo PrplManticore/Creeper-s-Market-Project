@@ -117,7 +117,7 @@ def standardize_string(value):
 
 
 def standardize_inventory_data(raw_inventory):
-    # Normalize raw inventory records into a consistent schema.
+    # Normalize raw inventory records into a consistent format.
     standardized = []
     for item in raw_inventory:
         standardized.append({
@@ -129,7 +129,7 @@ def standardize_inventory_data(raw_inventory):
 
 
 def standardize_market_data(raw_market):
-    # Normalize raw market records into a consistent schema.
+    # Normalize raw market records into a consistent format.
     standardized = []
     for item in raw_market:
         standardized.append({

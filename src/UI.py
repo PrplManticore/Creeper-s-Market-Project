@@ -24,6 +24,8 @@ class MarketApp(tk.Tk):
         self.title("Creeper's Market")
         self.geometry("1000x650")
         self.DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "raw" / "test"
+        self.PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed" / "test"
+        self.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
         self.inventory_file: Optional[Path] = None
         self.market_file: Optional[Path] = self.DATA_DIR / "market_test_data.json"
         self.standardize_inventory_flag = tk.BooleanVar(value=False)
@@ -103,10 +105,9 @@ class MarketApp(tk.Tk):
                 p = Path(path)
                 if p.suffix.lower() == ".lua":
                     try:
-                        cleaned = dc.convert_file(
+                        cleaned = dc.convert_to_json_and_save(
                             str(p),
-                            output_path=self.DATA_DIR / f"{p.stem}_cleaned.json",
-                            output_format="json",
+                            output_dir=self.PROCESSED_DIR,
                             root_key="inventory_data",
                         )
                         load_path = Path(cleaned)
@@ -139,10 +140,9 @@ class MarketApp(tk.Tk):
                 # If Lua, convert to JSON first (in background)
                 if p.suffix.lower() == ".lua":
                     try:
-                        cleaned = dc.convert_file(
+                        cleaned = dc.convert_to_json_and_save(
                             str(p),
-                            output_path=self.DATA_DIR / f"{p.stem}_cleaned.json",
-                            output_format="json",
+                            output_dir=self.PROCESSED_DIR,
                             root_key="market_data",
                         )
                         load_path = Path(cleaned)
@@ -164,8 +164,8 @@ class MarketApp(tk.Tk):
                 self.after(0, lambda: messagebox.showerror("Load Error", f"Failed to load market:\n{e}"))
                 self.after(0, lambda: self.status.set("Failed to load market"))
 
-            thread = threading.Thread(target=load, daemon=True)
-            thread.start()
+        thread = threading.Thread(target=load, daemon=True)
+        thread.start()
 
     def open_inventory_file(self) -> None:
         # Prompt the user to choose an inventory file and start loading it.
@@ -180,17 +180,16 @@ class MarketApp(tk.Tk):
         try:
             input_path = Path(path)
             if input_path.suffix.lower() == ".lua":
-                cleaned_path = dc.convert_file(
+                cleaned_path = dc.convert_to_json_and_save(
                     path,
-                    output_path=self.DATA_DIR / f"{input_path.stem}_cleaned.json",
-                    output_format="json",
+                    output_dir=self.PROCESSED_DIR,
                     root_key="inventory_data"
                 )
             else:
                 cleaned_path = input_path
 
             self.status.set("Loading inventory...")
-            self._load_inventory_in_thread(input_path)
+            self._load_inventory_in_thread(cleaned_path)
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load inventory:\n{e}")
             self.status.set("Failed to load inventory")

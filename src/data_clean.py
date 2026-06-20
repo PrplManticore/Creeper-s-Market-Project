@@ -5,15 +5,37 @@ import csv
 from typing import Optional, Union
 import shutil
 
-def convert_to_json_and_save(input_path: Union[str, Path],
-                             output_dir: Optional[Union[str, Path]] = None,
-                             root_key: Optional[str] = None) -> Path:
+def convert_to_json_and_save(
+        input_path: Union[str, Path],
+        output_dir: Optional[Union[str, Path]] = None,
+        root_key: Optional[str] = None,
+        output_name: Optional[str] = None
+) -> Path:
     """
-    Placeholder function.
-    Intended to convert data to JSON and save it to output_dir,
-    optionally wrapping the result under root_key.
+    Convert a supported input file to JSON and save a cleaned version.
+
+    The cleaned file is written to output_dir or the input file's parent directory.
+    If output_name is omitted, the file is named <input stem>_cleaned.json.
     """
-    pass
+    input_path = Path(input_path)
+
+    if output_dir is None:
+        output_dir = input_path.parent
+    else:
+        output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if output_name:
+        output_path = output_dir / output_name
+    else:
+        output_path = output_dir / f"{input_path.stem}_cleaned.json"
+
+    return convert_file(
+        input_path,
+        output_path=output_path,
+        output_format="json",
+        root_key=root_key,
+    )
 
 def lua_table_to_json(text:str):
     # Trim everything outside the outermost braces
