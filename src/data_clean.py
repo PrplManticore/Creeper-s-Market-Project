@@ -5,131 +5,6 @@ import csv
 from typing import Optional, Union
 import shutil
 
-def convert_to_json_and_save(
-        input_path: Union[str, Path],
-        output_dir: Optional[Union[str, Path]] = None,
-        root_key: Optional[str] = None,
-        output_name: Optional[str] = None
-) -> Path:
-    """
-    Convert a supported input file to JSON and save a cleaned version.
-
-    The cleaned file is written to output_dir or the input file's parent directory.
-    If output_name is omitted, the file is named <input stem>_cleaned.json.
-    """
-    input_path = Path(input_path)
-
-    if output_dir is None:
-        output_dir = input_path.parent
-    else:
-        output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    if output_name:
-        output_path = output_dir / output_name
-    else:
-        output_path = output_dir / f"{input_path.stem}_cleaned.json"
-
-    return convert_file(
-        input_path,
-        output_path=output_path,
-        output_format="json",
-        root_key=root_key,
-    )
-
-def lua_table_to_json(text:str):
-    # Trim everything outside the outermost braces
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("No Lua table found in input")
-    table = text[start:end+1]
-
-    # Quote unquoted keys: key = -> "key":
-    table = re.sub(r"(\b[a-zA-Z_][\w]*)\s*=", r'"\1":', table)
-
-    # Replace Lua literals with JSON equivalents
-    table = table.replace("nil", "null")
-
-    # remove trailing commas before closing brackets/braces
-    table = re.sub(r",\s*([}\]])", r"\1", table)
-
-    def convert_arrays(s: str) -> str:
-        out = []
-        stack = []
-        i = 0
-        while i < len(s):
-            ch = s[i]
-            if ch == '"':
-                # copy quoted string (including escapes)
-                out.append(ch)
-                i += 1
-                while i < len(s):
-                    out.append(s[i])
-                    if s[i] == "\\":
-                        i += 2
-                        continue
-                    if s[i] == '"':
-                        i += 1
-                        break
-                    i += 1
-                continue
-
-            if ch == '{':
-                # Attempt to decide whether this table should be an array or object
-                j = i + 1
-                depth = 1
-                while j < len(s) and depth > 0:
-                    if s[j] == '"' :
-                        # Skip strings
-                        j += 1
-                        while j < len(s):
-                            j += 2
-                            continue
-                        if s[j] == '"':
-                            j += 1
-                            break
-                        j += 1
-                    continue
-                if s[j] == '{':
-                    depth += 1
-                elif s[j] == '}':
-                    depth += 1
-                j += 1
-            inner = s[i+1:j-1] if j-1 > i else ""
-            # Decide if inner content looks like an object (key:value) or array
-            if re.search(r'"\s*[\w\- ]+\s*"\s*:', inner) or re.search(r'\w+\s*:', inner):
-                out.append('{')
-                stack.append('object')
-            else:
-                out.append('[')
-                stack.append('array')
-            i += 1
-            continue
-
-            if ch == '}':
-                if stack:
-                    typ = stack.pop()
-                    out.append(']' if typ == 'array' else '}')
-                else:
-                    out.append('}')
-                i += 1
-                continue
-
-            out.append(ch)
-            i += 1
-        return ''.join(out)
-    
-    table = convert_arrays(table)
-
-    try:
-        parsed = json.loads(table)
-    except json.JSONDecodeError as exc:
-        snippet = table[max(0, exc.pos - 40): exc.pos + 40]
-        raise ValueError(f"Fao;ed to parse converted JSON: {exc.msg}; snippet={snippet}")
-    
-    return parsed
-
 def load_data(file_path):
     file_path = Path(file_path)
     suffix = file_path.suffix.lower()
@@ -161,7 +36,17 @@ def load_data(file_path):
     if suffix == ".lua":
         # Convert Lua table syntax to JSON-like Python data
         text = file_path.read_text(encoding="utf-8")
-        return lua_table_to_json(text)
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 <+ start:
+            raise ValueError("No Lua table found in input")
+        
+        table_text = text[start:end + 1]
+        table_text = re.sub(r"(\b[a-zA-Z_][\w]*)\s=", r'"\1":', table_text)
+        table_text = table_text.replace("nil", "null")
+        table_text = re.sub(r",\s*([}\]])", r"\1", table_text)
+
+        return json.loads(table_text)
         
     raise ValueError(f"Unsupported file format: {file_path.suffix}")
 

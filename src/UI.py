@@ -103,20 +103,7 @@ class MarketApp(tk.Tk):
         def load():
             try:
                 p = Path(path)
-                if p.suffix.lower() == ".lua":
-                    try:
-                        cleaned = dc.convert_to_json_and_save(
-                            str(p),
-                            output_dir=self.PROCESSED_DIR,
-                            root_key="inventory_data",
-                        )
-                        load_path = Path(cleaned)
-                    except Exception as e:
-                        self.after(0, lambda: messagebox.showerror("Conversion Error", f"Failed to convert Lua inventory file:\n{e}"))
-                        self.after(0, lambda: self.status.set("Failed to convert inventory"))
-                        return
-                else:
-                    load_path = p
+                load_path = p
 
                 load_inventory_data(load_path)
                 self.inventory_file = load_path
@@ -137,22 +124,7 @@ class MarketApp(tk.Tk):
         def load():
             try:
                 p = Path(path)
-                # If Lua, convert to JSON first (in background)
-                if p.suffix.lower() == ".lua":
-                    try:
-                        cleaned = dc.convert_to_json_and_save(
-                            str(p),
-                            output_dir=self.PROCESSED_DIR,
-                            root_key="market_data",
-                        )
-                        load_path = Path(cleaned)
-                    except Exception as e:
-                        if not suppress_error:
-                            self.after(0, lambda: messagebox.showerror("Conversion Error", f"Failed to convert Lua market file:\n{e}"))
-                            self.after(0, lambda: self.status.set("Failed to convert market"))
-                        return
-                else:
-                    load_path = p
+                load_path = p
 
                 load_market_data(load_path)
                 self.market_file = load_path
@@ -179,14 +151,7 @@ class MarketApp(tk.Tk):
         
         try:
             input_path = Path(path)
-            if input_path.suffix.lower() == ".lua":
-                cleaned_path = dc.convert_to_json_and_save(
-                    path,
-                    output_dir=self.PROCESSED_DIR,
-                    root_key="inventory_data"
-                )
-            else:
-                cleaned_path = input_path
+            cleaned_path = input_path
 
             self.status.set("Loading inventory...")
             self._load_inventory_in_thread(cleaned_path)
@@ -198,7 +163,7 @@ class MarketApp(tk.Tk):
     def auto_select_inventory(self) -> None:
         # Let the user pick an inventory file from the default data directory.
         inventory_files = sorted(
-            [p for p in self.DATA_DIR.glob("inventory*.*") if p.suffix.lower() in [".json", ".csv"]]
+            [p for p in self.DATA_DIR.glob("inventory*.*") if p.suffix.lower() in [".json", ".csv", ".lua"]]
         )
 
         if not inventory_files:
@@ -236,7 +201,6 @@ class MarketApp(tk.Tk):
         
         try:
             input_path = Path(path)
-            # Do Lua conversion inside background thread to avoid blocking UI
             self.status.set("Loading market...")
             self._load_market_in_thread(input_path)
         except Exception as e:

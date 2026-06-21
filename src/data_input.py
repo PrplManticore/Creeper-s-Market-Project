@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import csv
+from lupa import LuaRuntime
 
 inventory_data = []
 market_data = []
@@ -20,7 +21,7 @@ def choose_inventory_file(directory=None):
     
     inventory_files = sorted(
         [path for path in directory.glob("inventory*.*")
-         if path.suffix.lower() in [".json", ".csv"]]
+         if path.suffix.lower() in [".json", ".csv", ".lua"]]
     )
 
     if not inventory_files:
@@ -67,6 +68,10 @@ def load_inventory_data(file_path=None):
         with open(file_path, "r", newline="") as file:
             reader = csv.DictReader(file)
             inventory_data = list(reader)
+    elif file_path.suffix.lower() == ".lua":
+        with open(file_path, "r") as file:
+            reader = file.read()
+            lua.execute(lua_code)
 
     else:
         raise ValueError(f"Unsupported inventory file type: {file_path.suffix}")
@@ -75,9 +80,18 @@ def load_inventory_data(file_path=None):
 def load_market_data(file_path):
     # Load market data from a JSON file into the global market_data list.
     global market_data
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-        market_data = data["market_data"]
+    if file_path.suffix.lower() == ".json":
+        with open(file_path, "r") as file:
+            data = json.load(file)
+            inventory_data = data["market_data"]
+    elif file_path.suffix.lower() == ".csv":
+        with open(file_path, "r", newline="") as file:
+            reader = csv.DictReader(file)
+            inventory_data = list(reader)
+    elif file_path.suffix.lower() == ".lua":
+        with open(file_path, "r") as file:
+            reader = file.read()
+            lua.execute(lua_code)
 
 
 def get_inventory_data():
@@ -154,7 +168,7 @@ def validate_file_format(file_path):
 
     file_extension = file_path.suffix.lower()
 
-    if file_extension not in [".json", ".csv"]:
+    if file_extension not in [".json", ".csv", ".lua"]:
         return False
     
     try:
