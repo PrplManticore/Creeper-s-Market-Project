@@ -6,6 +6,8 @@ from lupa import LuaRuntime
 inventory_data = []
 market_data = []
 
+lua = LuaRuntime(unpack_returned_tuples=True)
+
 def choose_inventory_file(directory=None):
     # Prompt the user to select an inventory file from a directory
     if directory is None:
@@ -71,7 +73,7 @@ def load_inventory_data(file_path=None):
     elif file_path.suffix.lower() == ".lua":
         with open(file_path, "r") as file:
             reader = file.read()
-            lua.execute(lua_code)
+            lua.execute(reader)
 
     else:
         raise ValueError(f"Unsupported inventory file type: {file_path.suffix}")
@@ -83,15 +85,18 @@ def load_market_data(file_path):
     if file_path.suffix.lower() == ".json":
         with open(file_path, "r") as file:
             data = json.load(file)
-            inventory_data = data["market_data"]
+            market_data = data["market_data"]
     elif file_path.suffix.lower() == ".csv":
         with open(file_path, "r", newline="") as file:
             reader = csv.DictReader(file)
-            inventory_data = list(reader)
+            market_data = list(reader)
     elif file_path.suffix.lower() == ".lua":
         with open(file_path, "r") as file:
             reader = file.read()
-            lua.execute(lua_code)
+            lua.execute(reader)
+
+    else:
+        raise ValueError(f"Unsupported market file type: {file_path.suffix}")
 
 
 def get_inventory_data():

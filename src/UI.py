@@ -144,7 +144,7 @@ class MarketApp(tk.Tk):
         path = filedialog.askopenfilename(
             title="Select Inventory File",
             initialdir=self.DATA_DIR,
-            filetypes=[("JSON/CSV", "*.json *.csv *.lua"), ("All files", "*.*")]
+            filetypes=[("JSON/CSV/Lua", "*.json;*.csv;*.lua"), ("All files", "*.*")]
         )
         if not path:
             return
@@ -194,7 +194,7 @@ class MarketApp(tk.Tk):
         path = filedialog.askopenfilename(
             title="Select Market File",
             initialdir=self.DATA_DIR,
-            filetypes=[("JSON/CSV", "*.json *.csv *.lua"), ("All files", "*.*")]
+            filetypes=[("JSON/CSV/Lua", "*.json;*.csv;*.lua"), ("All files", "*.*")]
         )
         if not path:
             return
