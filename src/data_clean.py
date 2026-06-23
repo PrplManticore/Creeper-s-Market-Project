@@ -2,8 +2,111 @@ from pathlib import Path
 import re
 import json
 import csv
-from typing import Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 import shutil
+
+Record = Dict[str, Any]
+
+def remove_duplicate_records(
+    records: Sequence[Record],
+    key_fields: Optional[Sequence[str]] = None,
+    preserve_first: bool = True,
+) -> List[Record]:
+    """
+    Remove duplicate records from a list of dects.
+    If key_fields is provided, duplicates are detected by those field values.
+    Otherwise the entire record dict is used.
+    """
+    seen = set()
+    deduped: List[Record] = []
+
+    for record in records:
+        if key_fields:
+            key=tuple(record.get(field) for field in key_fields)
+        else:
+            key = tuple(sorted(record.items()))
+        if key in seen:
+            if not preserve_first:
+                # Replace last seen record with current one
+                deduped = [r for r in deduped if tuple(sorted(r.items())) != key]
+                deduped.append(record)
+            continue
+        seen.add(key)
+        deduped.append(record)
+
+    return deduped
+
+
+def handle_missing_values(
+    records: Sequence[Record],
+    fill_defaults: Optional[Dict[str, Any]] = None,
+    fill_value: Any = "",
+    required_fields: Optional[Sequence[str]] = None,
+    drop_missing: bool = False,
+) -> List[Record]:
+    """
+    Fill or drop missing values in records.
+    - fill_defaults: dict of field->value to fill only those fields.
+    - fill_value: fallback value for any missing field.
+    - required_fields: list of fields that must exist and not be empty.
+    - drop_missing: if True, remove records missing any required field.
+    """
+    fill_defaults = fill_defaults or {}
+    cleaned: List[Record] = []
+
+    for record in records:
+        record = dict(record)
+        for field, default in fill_defaults.items():
+            if record.get(field) in (None, "", []):
+                record[field] = default
+
+        if fill_value is not None:
+            for field, value in list(record.items()):
+                if value in (None, ""):
+                    record[field] = fill_value
+
+        if required_fields:
+            missing = any(record.get(field) in (None, "") for field in required_fields)
+            if missing:
+                if drop_missing:
+                    continue
+                # if not dropping, ensure required fields are filled
+                for field in required_fields:
+                    if record.get(field) in (None, ""):
+                        record[field] = fill_defaults.get(field, fill_value)
+
+        cleaned.append(record)
+
+    return cleaned
+
+
+def filter_irrelevant_data(
+    records: Sequence[Record],
+    allowed_fields: Optional[Sequence[str]] = None,
+    exclude_fields: Optional[Sequence[str]] = None,
+    predicate: Optional[callable] = None,
+) -> List[Record]:
+    """
+    Keep only relevant records and optionally prune irrelevant fields.
+    - allowed_fields: whitelist of field names to preserve in each record.
+    - exclude_fields: blacklist of fields to remove from each record.
+    - predicate: function(record) -> bool to decide whether to keep a record.
+    """
+    filtered: List[Record] = []
+
+    for record in records:
+        if predicate is not None and not predicate(record):
+            continue
+
+        if allowed_fields is not None:
+            record = {k: v for k, v in record.items() if k in allowed_fields}
+        elif exclude_fields is not None:
+            record = {k: v for k, v in record.items() if k not in exclude_fields}
+
+        filtered.append(record)
+    
+    return filtered
+
 
 def load_data(file_path):
     file_path = Path(file_path)
