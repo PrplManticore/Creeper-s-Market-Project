@@ -1,0 +1,60 @@
+{
+  "market_data": [
+    {
+      "item_id": 1001,
+      "item_name": "Rubedite Ore",
+      "location": "Deshaan",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1002,
+      "item_name": "Ancestor Silk",
+      "location": "Grahtwood",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1003,
+      "item_name": "Dreugh Wax",
+      "location": "Stormhaven",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1004,
+      "item_name": "Kuta",
+      "location": "Deshaan",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1005,
+      "item_name": "Perfect Roe",
+      "location": "Vvardenfell",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1006,
+      "item_name": "Columbine",
+      "location": "Reaper's March",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1007,
+      "item_name": "Corn Flower",
+      "location": "Stormhaven",
+      "selling_price": 0,
+      "quantity": 0
+    },
+    {
+      "item_id": 1008,
+      "item_name": "Tempering Alloy",
+      "location": "Vvardenfell",
+      "selling_price": 0,
+      "quantity": 0
+    }
+  ]
+}

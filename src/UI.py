@@ -38,6 +38,45 @@ class MarketApp(tk.Tk):
         self.refresh_all()
 
 
+    def _prepare_cleaned_data_file(self, input_path: Path, kind: str) -> Path:
+        # Clean the selected data file and save it to the processed/test folder.
+        input_path = Path(input_path)
+        records = dc.load_data(input_path)
+
+        if kind == "inventory":
+            records = dc.remove_duplicate_records(records, key_fields=["item_id"])
+            records = dc.handle_missing_values(
+                records,
+                fill_defaults={"item_name": "", "quantity": 0},
+                required_fields=["item_id"],
+                drop_missing=True,
+            )
+            records = dc.filter_irrelevant_data(
+                records,
+                allowed_fields=["item_id", "item_name", "quantity"],
+            )
+            root_key = "inventory"
+        elif kind == "market":
+            records = dc.remove_duplicate_records(records, key_fields=["item_id"])
+            records = dc.handle_missing_values(
+                records,
+                fill_defaults={"item_name": "", "selling_price": 0, "quantity": 0, "location": ""},
+                required_fields=["item_id"],
+                drop_missing=True,
+            )
+            records = dc.filter_irrelevant_data(
+                records,
+                allowed_fields=["item_id", "item_name", "selling_price", "quantity", "location"],
+            )
+            root_key = "market_data"
+        else:
+            raise ValueError(f"Unsupported data kind: {kind}")
+        
+        output_path = self.PROCESSED_DIR / f"{input_path.stem}_cleaned.json"
+        dc.save_json(output_path, records, root_key=root_key)
+        return output_path
+
+
     def create_widgets(self) -> None:
         header = ttk.Label(self, text="Creeper's Market", font=("Segoe UI", 18, "bold"))
         header.pack(pady=8)
@@ -103,7 +142,7 @@ class MarketApp(tk.Tk):
         def load():
             try:
                 p = Path(path)
-                load_path = p
+                load_path = self._prepare_cleaned_data_file(p, "inventory")
 
                 load_inventory_data(load_path)
                 self.inventory_file = load_path
@@ -124,7 +163,7 @@ class MarketApp(tk.Tk):
         def load():
             try:
                 p = Path(path)
-                load_path = p
+                load_path = self._prepare_cleaned_data_file(p, "market")
 
                 load_market_data(load_path)
                 self.market_file = load_path
