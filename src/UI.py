@@ -3,7 +3,6 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import threading
-
 import data_input as di
 from data_input import (
     choose_inventory_file,
@@ -17,6 +16,8 @@ from data_input import (
     find_item_in_market,
 )
 import data_clean as dc
+from analysis_engine import match_items_between_files
+from data_input import get_inventory_data, get_market_data
 
 class MarketApp(tk.Tk):
     def __init__(self) -> None:
@@ -36,6 +37,42 @@ class MarketApp(tk.Tk):
         if self.market_file and self.market_file.exists():
             self._load_market_in_thread(self.market_file, suppress_error=True)
         self.refresh_all()
+
+
+    def analyze_matches(self) -> None:
+        # Ensure data loaded
+        inv = get_inventory_data() or []
+        mkt = get_market_data() or []
+        if not inv or not mkt:
+            messagebox.showwarning("Analyze Matches", "Inventory or Market data not loaded.")
+            return
+        
+        matches = match_items_between_files()
+
+        # Format output lines
+        lines = []
+        for m in matches:
+            iid = m.get("item_id") or "?"
+            inv_item = m.get("inventory_item")
+            mkt_item = m.get("market_item")
+            method = m.get("match_method") or "none"
+            if inv_item and mkt_item:
+                lines.append(f"{iid}: {inv_item.get('item_name', '<no name>')} — {mkt_item.get('location', '<no loc>')} (matched by {method})")
+            elif inv_item:
+                lines.append(f"{iid}: {inv_item.get('item_name', '<no name>')} — Market: (no match)")
+            else:
+                lines.append(f"{iid}: Inventory: (no match) — {mkt_item.get('item_name', '<no name>')} @ {mkt_item.get('location', '<no loc>')}")
+
+        # Show full results in a Toplevel window (safer for long lists)
+        win = tk.Toplevel(self)
+        win.title("Match Results")
+        txt = tk.Text(win, wrap="none", width=100, height=30)
+        txt.pack(side="left", fill="both", expand=True)
+        scrollbar = ttk.Scrollbar(win, orient="vertical", command=txt.yview)
+        scrollbar.pack(side="right", fill="y")
+        txt.configure(yscrollcommand=scrollbar.set)
+        txt.insert("1.0", "\n".join(lines))
+        txt.configure(state="disabled")
 
 
     def _prepare_cleaned_data_file(self, input_path: Path, kind: str) -> Path:
@@ -89,6 +126,7 @@ class MarketApp(tk.Tk):
         ttk.Button(btn_frame, text="Auto-select Inventory", command=self.auto_select_inventory).pack(side="left", padx=4)
         ttk.Button(btn_frame, text="Open Market File...", command=self.open_market_file).pack(side="left", padx=4)
         ttk.Button(btn_frame, text="Refresh", command=self.refresh_all).pack(side="left", padx=4)
+        ttk.Button(btn_frame, text="Analyze Matches", command=self.analyze_matches).pack(side="left", padx=4)
         
         ttk.Checkbutton(btn_frame, text="Standardize Inventory", variable=self.standardize_inventory_flag, command=self.on_standardize_toggled).pack(side="left", padx=8)
         ttk.Checkbutton(btn_frame, text="Standardize Market", variable=self.standardize_market_flag, command=self.on_standardize_toggled).pack(side="left", padx=8)
